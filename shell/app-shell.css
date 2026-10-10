@@ -1,0 +1,6 @@
+/* App-only tweaks. The site already respects safe areas; this fills the
+   status-bar strip with the brand colour so content never shows behind it. */
+html.in-app { -webkit-tap-highlight-color: transparent; }
+html.in-app body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: env(safe-area-inset-top, 0px); background: var(--wine-deep); z-index: 100; }
+html.in-app .skip { display: none; }
+html.no-weburl [data-copy] { display: none !important; }

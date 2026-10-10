@@ -1,0 +1,12 @@
+{
+  "appId": "com.elafandy.catalog",
+  "appName": "אלאפנדי",
+  "webDir": "www",
+  "backgroundColor": "#5E0F15",
+  "android": { "adjustMarginsForEdgeToEdge": "auto" },
+  "ios": { "contentInset": "never" },
+  "plugins": {
+    "SplashScreen": { "launchAutoHide": false, "backgroundColor": "#FFFFFF", "showSpinner": false },
+    "StatusBar": { "style": "DARK", "backgroundColor": "#5E0F15", "overlaysWebView": false }
+  }
+}
