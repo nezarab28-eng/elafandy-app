@@ -1,8 +1,8 @@
 /* Lets the catalog install as an app and open offline.
    Pages and product data: network first (always fresh when online).
    Images and fonts: cached after first view. */
-var V = 'elafandy-v1';
-var CORE = ['./', 'index.html', 'assets/style.css', 'assets/app.js', 'assets/config.js', 'data/products.js', 'assets/logo.webp'];
+var V = 'elafandy-v2';
+var CORE = ['./', 'index.html', 'assets/style.css', 'assets/app.js', 'assets/config.js', 'data/products.js', 'assets/logo.webp', 'assets/skin-tech.css', 'assets/skin-tech.js'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); }));
 });
