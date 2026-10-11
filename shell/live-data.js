@@ -14,8 +14,14 @@
 
   var savedCat = get(K_CAT), savedSite = get(K_SITE);
   if (valid(savedCat) && String(savedCat.generated || '') >= String((window.CATALOG || {}).generated || '')) window.CATALOG = savedCat;
-  if (savedSite && savedSite.nameHe) window.SITE = savedSite;
-  var inUse = { cat: JSON.stringify(window.CATALOG), site: JSON.stringify(window.SITE) };
+  /* Customer logins: accept the accounts built into the app as well as the website's,
+     so an account keeps working even if the published site has an older list. */
+  var builtInUsers = ((window.SITE || {}).users || []).slice();
+  if (savedSite && savedSite.nameHe) {
+    window.SITE = JSON.parse(JSON.stringify(savedSite));
+    window.SITE.users = builtInUsers.concat((savedSite.users || []).filter(function (u) { return builtInUsers.indexOf(u) < 0; }));
+  }
+  var inUse = { cat: JSON.stringify(window.CATALOG), site: JSON.stringify(savedSite && savedSite.nameHe ? savedSite : null) };
 
   /* Product images: when online, take them from the website so a changed photo shows
      without a new app version. If the website copy fails, fall back to the built-in one
