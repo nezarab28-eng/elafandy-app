@@ -15,7 +15,7 @@ let html = readFileSync(`${OUT}/index.html`, 'utf8');
 html = html
   .replace('</head>', '<link rel="stylesheet" href="app/app-shell.css">\n<link rel="stylesheet" href="app/skin-tech.css">\n</head>')
   .replace('<script src="data/products.js"></script>', '<script src="data/products.js"></script>\n<script src="app/live-data.js"></script>')
-  .replace('<script src="assets/app.js"></script>', '<script src="assets/app.js"></script>\n<script src="app/skin-tech.js"></script>')
+  .replace('<script src="assets/app.js"></script>', '<script src="assets/app.js"></script>\n<script src="app/login-fix.js"></script>\n<script src="app/skin-tech.js"></script>')
   .replace('<script src="assets/config.js"></script>',
            '<script src="app/app-config.js"></script>\n<script src="assets/config.js"></script>\n<script src="app/app-shell.js"></script>');
 // The website's offline service worker is not needed inside the app.
