@@ -47,7 +47,7 @@
     var seen = {};
     var strip = feat.filter(function (id) { if (seen[id] || !byId[id]) return false; seen[id] = 1; return true; }).slice(0, 12).map(function (id) {
       var p = byId[id];
-      return '<a class="th-prod" href="#p-' + esc(id) + '"><div class="im"><img loading="lazy" src="images/' + esc(id) + '.webp" alt="" onerror="this.src=\'assets/logo.webp\'"></div><span>' + esc(p.en || p.name) + '</span></a>';
+      return '<a class="th-prod" href="#p-' + esc(id) + '"><div class="im"><img loading="lazy" src="' + esc((window.IMG_BASE || '') + 'images/' + id + '.webp') + '" alt="" onerror="this.onerror=null;this.src=\'assets/logo.webp\'"></div><span>' + esc(p.en || p.name) + '</span></a>';
     }).join('');
     return '<div class="th">' +
       '<section class="th-hero"><span class="th-tag"><i></i>Elafandy · Tech store</span>' +

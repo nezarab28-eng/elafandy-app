@@ -17,15 +17,18 @@
   if (savedSite && savedSite.nameHe) window.SITE = savedSite;
   var inUse = { cat: JSON.stringify(window.CATALOG), site: JSON.stringify(window.SITE) };
 
-  /* Images of products added after this app version: try the website before the logo. */
+  /* Product images: when online, take them from the website so a changed photo shows
+     without a new app version. If the website copy fails, fall back to the built-in one
+     (and the catalog itself falls back to the logo). */
+  if (navigator.onLine !== false) window.IMG_BASE = BASE + '/';
   document.addEventListener('error', function (e) {
     var img = e.target;
-    if (!img || img.tagName !== 'IMG' || img.dataset.remote) return;
-    var m = (img.getAttribute('src') || '').match(/^images\/([^/?#]+\.webp)$/);
-    if (!m) return;
+    if (!img || img.tagName !== 'IMG' || img.dataset.local) return;
+    var src = img.getAttribute('src') || '';
+    if (src.indexOf(BASE + '/images/') !== 0) return;
     e.stopPropagation();
-    img.dataset.remote = '1';
-    img.src = BASE + '/images/' + m[1];
+    img.dataset.local = '1';
+    img.src = src.slice(BASE.length + 1).replace(/\?.*$/, '');
   }, true);
 
   /* Run a website script without disturbing the running catalog, and hand back what it set. */

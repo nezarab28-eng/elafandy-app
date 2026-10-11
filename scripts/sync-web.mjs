@@ -22,4 +22,11 @@ html = html
 html = html.replace(/<script>if \('serviceWorker'[^<]*<\/script>\n?/, '');
 if (!html.includes('app/app-shell.js')) { console.error('Could not inject the app shell into index.html'); process.exit(1); }
 writeFileSync(`${OUT}/index.html`, html);
+
+// Product images: let the app load them from the website when online (see shell/live-data.js).
+const appJs = `${OUT}/assets/app.js`;
+const js = readFileSync(appJs, 'utf8');
+const IMG = "'images/' + id + '.webp'";
+if (!js.includes(IMG)) { console.error('Could not find the image path in assets/app.js'); process.exit(1); }
+writeFileSync(appJs, js.replace(IMG, "(window.IMG_BASE || '') + " + IMG));
 console.log('www/ ready');
