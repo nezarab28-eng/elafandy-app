@@ -9,7 +9,7 @@
   var root = document.documentElement;
   root.classList.add('skin-tech', 'has-tabbar');
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', '#07101F');
+  if (meta) meta.setAttribute('content', '#FFFFFF');
 
   var D = window.CATALOG, S = window.SITE || {};
   var main = document.getElementById('main');
