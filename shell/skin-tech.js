@@ -1,4 +1,4 @@
-/* Elafandy "Tech" skin: dark app look, a home screen built on the 9 departments,
+/* Elafandy "Tech" skin: black/red/gold/white app look, a home screen built on the 9 departments,
    and a bottom tab bar. Loaded after assets/app.js. In the website it only turns on
    when the catalog is opened as an installed app (home-screen icon). */
 (function () {
@@ -9,7 +9,7 @@
   var root = document.documentElement;
   root.classList.add('skin-tech', 'has-tabbar');
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', '#FFFFFF');
+  if (meta) meta.setAttribute('content', '#0D0D0F');
 
   var D = window.CATALOG, S = window.SITE || {};
   var main = document.getElementById('main');
@@ -51,14 +51,16 @@
     }).join('');
     return '<div class="th">' +
       '<section class="th-hero"><span class="th-tag"><i></i>Elafandy · Tech store</span>' +
-        '<h1>מה תרצו למצוא היום?</h1><p>' + esc(S.intro || '') + '</p>' +
-        '<div class="th-stats"><span><b>' + nf(D.products.length) + '</b> מוצרים</span><span><b>' + D.groups.length + '</b> מחלקות</span>' +
-        (D.priceDate ? '<span>עודכן <b>' + esc(D.priceDate) + '</b></span>' : '') + '</div></section>' +
-      '<div class="th-head"><h2>מחלקות</h2><a href="#all">כל המוצרים ›</a></div>' +
+        '<h1>מה תרצו <em>למצוא</em> היום?</h1><p>' + esc(S.intro || '') + '</p>' +
+        '<div class="th-stats"><span><b>' + nf(D.products.length) + '</b>מוצרים</span><span><b>' + D.groups.length + '</b>מחלקות</span>' +
+        (D.priceDate ? '<span><b>' + esc(D.priceDate) + '</b>עדכון מחירים</span>' : '<span><b>24/7</b>קטלוג</span>') + '</div>' +
+        '<a class="th-cta" href="#all">לכל המוצרים' + I('<path d="m15 18-6-6 6-6"/>') + '</a></section>' +
+      '<div class="th-head"><h2>מחלקות</h2><a href="#all">הכל ›</a></div>' +
       '<nav class="th-grid" aria-label="מחלקות">' + tiles + '</nav>' +
       (strip ? '<div class="th-head"><h2>מוצרים נבחרים</h2></div><div class="th-strip">' + strip + '</div>' : '') +
-      '<div class="th-contact"><a class="wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>וואטסאפ</a>' +
-        '<a class="call" href="' + esc(telHref) + '"><svg><use href="#i-phone"/></svg>התקשרו</a></div>' +
+      '<div class="th-contact"><h3>צריכים עזרה בבחירה?</h3><p>דברו איתנו ונמצא לכם את המוצר המתאים.</p><div class="row">' +
+        '<a class="wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>וואטסאפ</a>' +
+        '<a class="call" href="' + esc(telHref) + '"><svg><use href="#i-phone"/></svg>התקשרו</a></div></div>' +
     '</div>';
   }
 

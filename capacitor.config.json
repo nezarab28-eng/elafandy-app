@@ -7,6 +7,6 @@
   "ios": { "contentInset": "never" },
   "plugins": {
     "SplashScreen": { "launchAutoHide": false, "backgroundColor": "#FFFFFF", "showSpinner": false },
-    "StatusBar": { "style": "LIGHT", "backgroundColor": "#FFFFFF", "overlaysWebView": false }
+    "StatusBar": { "style": "DARK", "backgroundColor": "#0D0D0F", "overlaysWebView": false }
   }
 }

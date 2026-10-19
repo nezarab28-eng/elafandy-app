@@ -46,8 +46,8 @@
   });
 
   if (P.StatusBar) {
-    P.StatusBar.setStyle({ style: 'LIGHT' }).catch(function () {});
-    if (Cap.getPlatform() === 'android') P.StatusBar.setBackgroundColor({ color: '#FFFFFF' }).catch(function () {});
+    P.StatusBar.setStyle({ style: 'DARK' }).catch(function () {});
+    if (Cap.getPlatform() === 'android') P.StatusBar.setBackgroundColor({ color: '#0D0D0F' }).catch(function () {});
   }
   window.addEventListener('load', function () {
     if (P.SplashScreen) setTimeout(function () { P.SplashScreen.hide(); }, 150);
