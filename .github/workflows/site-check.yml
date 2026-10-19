@@ -1,5 +1,5 @@
 # Manual check of what the website serves to the app (run from the Actions tab).
-# Saves a copy of the website's code and data files (no images) to the "site-snapshot" branch.
+# Saves a copy of the website's files and images to the "site-snapshot" branch.
 name: Website check
 on: workflow_dispatch
 permissions:
@@ -12,7 +12,7 @@ jobs:
         run: |
           mkdir snap && cd snap
           B=https://www.elafandy-tech.com
-          for path in index.html assets/app.js assets/style.css assets/config.js data/products.js sw.js manifest.webmanifest; do
+          for path in index.html assets/app.js assets/style.css assets/skins.css assets/config.js assets/i18n.js assets/cart.js data/products.js data/users.js assets/favicon.png assets/logo.webp assets/logo.png sw.js manifest.webmanifest; do
             mkdir -p "$(dirname "$path")"; curl -sf "$B/$path" -o "$path" || echo "missing $path" >> report.txt
           done
           grep -oE '(src|href)="[^"]+"' index.html | sort -u >> report.txt
@@ -21,7 +21,7 @@ jobs:
           for id in $ids; do
             for ext in webp jpg png; do
               r=$(curl -s -o /dev/null -w '%{http_code} %{size_download}' "$B/images/$id.$ext")
-              [ "${r%% *}" = 200 ] && { echo "$id.$ext $r $(curl -sI "$B/images/$id.$ext" | grep -i '^last-modified' | tr -d '\r')" >> images.txt; break; }
+              [ "${r%% *}" = 200 ] && { mkdir -p images; curl -sf "$B/images/$id.$ext" -o "images/$id.$ext"; echo "$id.$ext $r $(curl -sI "$B/images/$id.$ext" | grep -i '^last-modified' | tr -d '\r')" >> images.txt; break; }
             done
           done
           echo "images found: $(wc -l < images.txt)" >> report.txt
