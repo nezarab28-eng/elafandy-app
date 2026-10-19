@@ -1,0 +1,27 @@
+# Manual check of what the website serves to the app (run from the Actions tab).
+name: Website check
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check website files as the app requests them
+        run: |
+          for host in elafandy-tech.com www.elafandy-tech.com; do
+            echo "::notice::$host resolves to $(getent hosts $host | awk '{print $1}' | sort -u | tr '\n' ' ')"
+            for path in data/products.js assets/config.js assets/app.js index.html; do
+              r=$(curl -s -o /tmp/f -w '%{http_code} %{content_type} %{size_download} %{url_effective}' -L "https://$host/$path")
+              echo "::notice::$host/$path -> $r gen=$(grep -o '"priceDate":"[^"]*"' /tmp/f | head -1)"
+            done
+          done
+          curl -s https://www.elafandy-tech.com/data/products.js -o /tmp/p.js
+          ids=$(grep -o '"id":"[^"]*"' /tmp/p.js | cut -d'"' -f4 | head -400 | awk 'NR%40==1')
+          for id in $ids; do
+            for host in elafandy-tech.com www.elafandy-tech.com; do
+              a=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' "https://$host/images/$id.webp")
+              b=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' -H 'Referer: https://localhost/' -H 'Origin: https://localhost' "https://$host/images/$id.webp")
+              echo "::notice::$host images/$id.webp plain=[$a] from-app=[$b] cache=[$(curl -sI "https://$host/images/$id.webp" | grep -i '^cache-control\|^last-modified' | tr -d '\r' | tr '\n' ' ')]"
+            done
+          done
+          echo "::notice::products in live file: $(grep -o '"id":"[^"]*"' /tmp/p.js | wc -l)"
+          grep -o 'IMG_BUNDLES\|bundles/[^"]*' <(curl -s https://www.elafandy-tech.com/index.html) | sort -u | sed 's/^/::notice::index mentions /'
