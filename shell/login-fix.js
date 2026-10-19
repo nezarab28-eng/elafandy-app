@@ -21,7 +21,7 @@
     e.preventDefault(); e.stopPropagation();
     var typed = user.value.trim(), lower = typed.toLowerCase(), first = typed.charAt(0).toLowerCase() + typed.slice(1);
     var tries = [typed, first, lower].filter(function (v, i, a) { return a.indexOf(v) === i; });
-    var users = (window.SITE && window.SITE.users) || [];
+    var users = ((window.SITE && window.SITE.users) || []).concat(window.CATALOG_USERS || []);
     Promise.all(tries.map(function (u) { return hash(u + ':' + pass.value); })).then(function (hs) {
       for (var i = 0; i < hs.length; i++) if (users.indexOf(hs[i]) > -1) { user.value = tries[i]; break; }
     }).catch(function () {}).then(function () {

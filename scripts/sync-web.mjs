@@ -14,7 +14,8 @@ cpSync('shell', `${OUT}/app`, { recursive: true });
 let html = readFileSync(`${OUT}/index.html`, 'utf8');
 html = html
   .replace('</head>', '<link rel="stylesheet" href="app/app-shell.css">\n<link rel="stylesheet" href="app/skin-tech.css">\n</head>')
-  .replace('<script src="data/products.js"></script>', '<script src="data/products.js"></script>\n<script src="app/live-data.js"></script>')
+  .replace(html.includes('<script src="data/users.js"></script>') ? '<script src="data/users.js"></script>' : '<script src="data/products.js"></script>',
+           m => m + '\n<script src="app/live-data.js"></script>')
   .replace('<script src="assets/app.js"></script>', '<script src="assets/app.js"></script>\n<script src="app/login-fix.js"></script>\n<script src="app/skin-tech.js"></script>')
   .replace('<script src="assets/config.js"></script>',
            '<script src="app/app-config.js"></script>\n<script src="assets/config.js"></script>\n<script src="app/app-shell.js"></script>');
@@ -28,5 +29,5 @@ const appJs = `${OUT}/assets/app.js`;
 const js = readFileSync(appJs, 'utf8');
 const IMG = "'images/' + id + '.webp'";
 if (!js.includes(IMG)) { console.error('Could not find the image path in assets/app.js'); process.exit(1); }
-writeFileSync(appJs, js.replace(IMG, "(window.IMG_BASE || '') + " + IMG));
+writeFileSync(appJs, js.replace(IMG, "(window.IMG_BASE || '') + " + IMG + " + (window.IMG_BASE ? window.IMG_V || '' : '')"));
 console.log('www/ ready');

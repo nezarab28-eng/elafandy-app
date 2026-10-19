@@ -8,13 +8,34 @@
 
   var root = document.documentElement;
   root.classList.add('skin-tech', 'has-tabbar');
+  /* the website has its own looks (data-skin); inside the app the black/red/gold look wins */
+  root.removeAttribute('data-skin');
+  if (window.MutationObserver) new MutationObserver(function () { if (root.hasAttribute('data-skin')) root.removeAttribute('data-skin'); })
+    .observe(root, { attributes: true, attributeFilter: ['data-skin'] });
   var meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', '#0D0D0F');
 
   var D = window.CATALOG, S = window.SITE || {};
+  /* app texts in the website's three languages (the website's own selector picks the language) */
+  var I18N = window.I18N || null, LANG = (I18N && I18N.lang) || 'he';
+  var TX = {
+    he: { h1: 'מה תרצו <em>למצוא</em> היום?', products: 'מוצרים', depts: 'מחלקות', priceUpd: 'עדכון מחירים', catalog: 'קטלוג', allProducts: 'לכל המוצרים',
+          all: 'הכל ›', featured: 'מוצרים נבחרים', help: 'צריכים עזרה בבחירה?', helpP: 'דברו איתנו ונמצא לכם את המוצר המתאים.',
+          wa: 'וואטסאפ', call: 'התקשרו', home: 'בית', search: 'חיפוש', cart: 'סל', login: 'כניסה', logout: 'יציאה', nav: 'ניווט ראשי' },
+    ar: { h1: 'عمّ <em>تبحث</em> اليوم؟', products: 'منتجات', depts: 'أقسام', priceUpd: 'تحديث الأسعار', catalog: 'كتالوج', allProducts: 'كل المنتجات',
+          all: 'الكل ›', featured: 'منتجات مختارة', help: 'تحتاج مساعدة في الاختيار؟', helpP: 'تواصل معنا ونجد لك المنتج المناسب.',
+          wa: 'واتساب', call: 'اتصل', home: 'الرئيسية', search: 'بحث', cart: 'السلة', login: 'دخول', logout: 'خروج', nav: 'التنقل الرئيسي' },
+    en: { h1: 'What are you <em>looking</em> for today?', products: 'products', depts: 'Departments', priceUpd: 'Price update', catalog: 'catalog', allProducts: 'All products',
+          all: 'All ›', featured: 'Featured products', help: 'Need help choosing?', helpP: "Talk to us and we'll find the right product for you.",
+          wa: 'WhatsApp', call: 'Call', home: 'Home', search: 'Search', cart: 'Cart', login: 'Log in', logout: 'Log out', nav: 'Main navigation' }
+  };
+  function tx(k) { return (TX[LANG] || TX.he)[k] || TX.he[k]; }
+  function gName(g) { return I18N && I18N.tg ? I18N.tg(g) : g.name; }
+  function pName(p) { return LANG === 'ar' ? (p.na || p.name) : LANG === 'en' ? (p.ne || p.en || p.name) : p.name; }
+  var NUM = LANG === 'he' ? 'he-IL' : LANG === 'ar' ? 'en-US' : 'en-US';
   var main = document.getElementById('main');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function nf(n) { return Number(n).toLocaleString('he-IL'); }
+  function nf(n) { return Number(n).toLocaleString(NUM); }
   var digits = function (s) { return String(s || '').replace(/\D/g, ''); };
   var waHref = 'https://wa.me/' + digits(S.whatsapp) + '?text=' + encodeURIComponent('שלום, אשמח לקבל פרטים');
   var telHref = 'tel:+' + digits(S.phone);
@@ -40,47 +61,50 @@
   function homeHTML() {
     var tiles = D.groups.map(function (g) {
       return '<a class="th-tile" href="#g-' + esc(g.id) + '"><span class="th-ico">' + (ICONS[g.id] || ICONS.other) + '</span>' +
-        '<strong>' + esc(g.name) + '</strong><small>' + nf(groupCount(g)) + ' מוצרים</small></a>';
+        '<strong>' + esc(gName(g)) + '</strong><small>' + nf(groupCount(g)) + ' ' + tx('products') + '</small></a>';
     }).join('');
     var feat = (D.hero || []).concat(D.groups.map(function (g) { return (g.cover || [])[0]; })).filter(Boolean);
     var byId = {}; D.products.forEach(function (p) { byId[p.id] = p; });
     var seen = {};
     var strip = feat.filter(function (id) { if (seen[id] || !byId[id]) return false; seen[id] = 1; return true; }).slice(0, 12).map(function (id) {
       var p = byId[id];
-      return '<a class="th-prod" href="#p-' + esc(id) + '"><div class="im"><img loading="lazy" src="' + esc((window.IMG_BASE || '') + 'images/' + id + '.webp') + '" alt="" onerror="this.onerror=null;this.src=\'assets/logo.webp\'"></div><span>' + esc(p.en || p.name) + '</span></a>';
+      return '<a class="th-prod" href="#p-' + esc(id) + '"><div class="im"><img loading="lazy" src="' + esc((window.IMG_BASE || '') + 'images/' + id + '.webp' + (window.IMG_BASE ? window.IMG_V || '' : '')) + '" alt="" onerror="this.onerror=null;this.src=\'assets/logo.webp\'"></div><span>' + esc(p.en || p.name) + '</span></a>';
     }).join('');
     return '<div class="th">' +
       '<section class="th-hero"><span class="th-tag"><i></i>Elafandy · Tech store</span>' +
-        '<h1>מה תרצו <em>למצוא</em> היום?</h1><p>' + esc(S.intro || '') + '</p>' +
-        '<div class="th-stats"><span><b>' + nf(D.products.length) + '</b>מוצרים</span><span><b>' + D.groups.length + '</b>מחלקות</span>' +
-        (D.priceDate ? '<span><b>' + esc(D.priceDate) + '</b>עדכון מחירים</span>' : '<span><b>24/7</b>קטלוג</span>') + '</div>' +
-        '<a class="th-cta" href="#all">לכל המוצרים' + I('<path d="m15 18-6-6 6-6"/>') + '</a></section>' +
-      '<div class="th-head"><h2>מחלקות</h2><a href="#all">הכל ›</a></div>' +
-      '<nav class="th-grid" aria-label="מחלקות">' + tiles + '</nav>' +
-      (strip ? '<div class="th-head"><h2>מוצרים נבחרים</h2></div><div class="th-strip">' + strip + '</div>' : '') +
-      '<div class="th-contact"><h3>צריכים עזרה בבחירה?</h3><p>דברו איתנו ונמצא לכם את המוצר המתאים.</p><div class="row">' +
-        '<a class="wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>וואטסאפ</a>' +
-        '<a class="call" href="' + esc(telHref) + '"><svg><use href="#i-phone"/></svg>התקשרו</a></div></div>' +
+        '<h1>' + tx('h1') + '</h1><p>' + esc((I18N && I18N.site ? I18N.site('intro') : S.intro) || '') + '</p>' +
+        '<div class="th-stats"><span><b>' + nf(D.products.length) + '</b>' + tx('products') + '</span><span><b>' + D.groups.length + '</b>' + tx('depts') + '</span>' +
+        (D.priceDate ? '<span><b>' + esc(D.priceDate) + '</b>' + tx('priceUpd') + '</span>' : '<span><b>24/7</b>' + tx('catalog') + '</span>') + '</div>' +
+        '<a class="th-cta" href="#all">' + tx('allProducts') + I('<path d="m15 18-6-6 6-6"/>') + '</a></section>' +
+      '<div class="th-head"><h2>' + tx('depts') + '</h2><a href="#all">' + tx('all') + '</a></div>' +
+      '<nav class="th-grid" aria-label="' + esc(tx('depts')) + '">' + tiles + '</nav>' +
+      (strip ? '<div class="th-head"><h2>' + tx('featured') + '</h2></div><div class="th-strip">' + strip + '</div>' : '') +
+      '<div class="th-contact"><h3>' + tx('help') + '</h3><p>' + tx('helpP') + '</p><div class="row">' +
+        '<a class="wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>' + tx('wa') + '</a>' +
+        '<a class="call" href="' + esc(telHref) + '"><svg><use href="#i-phone"/></svg>' + tx('call') + '</a></div></div>' +
     '</div>';
   }
 
   /* bottom tab bar */
   var bar = document.createElement('nav');
-  bar.className = 'tabbar'; bar.setAttribute('aria-label', 'ניווט ראשי');
+  bar.className = 'tabbar'; bar.setAttribute('aria-label', tx('nav'));
+  var cartBtn = document.getElementById('cartBtn');
   bar.innerHTML =
-    '<a href="#home" data-tab="home">' + I('<path d="M3 11 12 3.5 21 11"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/>') + 'בית</a>' +
-    '<a href="#all" data-tab="all">' + ICONS.other + 'מוצרים</a>' +
-    '<button type="button" data-tab="search">' + I('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>') + 'חיפוש</button>' +
-    '<a class="tb-wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#i-wa"/></svg>וואטסאפ</a>' +
+    '<a href="#home" data-tab="home">' + I('<path d="M3 11 12 3.5 21 11"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/>') + tx('home') + '</a>' +
+    '<a href="#all" data-tab="all">' + ICONS.other + tx('products') + '</a>' +
+    '<button type="button" data-tab="search">' + I('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>') + tx('search') + '</button>' +
+    (cartBtn
+      ? '<button type="button" data-tab="cart">' + I('<path d="M3 4h2.5l2.2 11h10.6L20.5 7H6.6"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/>') + tx('cart') + '<b class="tb-badge" hidden></b></button>'
+      : '<a class="tb-wa" href="' + esc(waHref) + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#i-wa"/></svg>' + tx('wa') + '</a>') +
     (S.priceMode === 'login'
-      ? '<button type="button" data-tab="login">' + I('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') + '<span>כניסה</span></button>'
-      : '<a href="' + esc(telHref) + '">' + I('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>') + 'התקשרו</a>');
+      ? '<button type="button" data-tab="login">' + I('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') + '<span>' + tx('login') + '</span></button>'
+      : '<a href="' + esc(telHref) + '">' + I('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>') + tx('call') + '</a>');
   document.body.appendChild(bar);
 
   var loginBtn = document.getElementById('loginBtn'), logoutBtn = document.getElementById('logoutBtn');
   function syncLogin() {
     var b = bar.querySelector('[data-tab="login"] span');
-    if (b && logoutBtn) b.textContent = logoutBtn.hidden ? 'כניסה' : 'יציאה';
+    if (b && logoutBtn) b.textContent = logoutBtn.hidden ? tx('login') : tx('logout');
   }
   bar.addEventListener('click', function (e) {
     var t = e.target.closest('[data-tab]'); if (!t) return;
@@ -90,6 +114,8 @@
       if (h && h !== 'home' && !/^(all|g-|c\d)/.test(h)) location.hash = 'all';
       window.scrollTo(0, 0);
       setTimeout(function () { var q = document.getElementById('q'); if (q) q.focus(); }, 60);
+    } else if (tab === 'cart') {
+      cartBtn.click();
     } else if (tab === 'login') {
       (logoutBtn && !logoutBtn.hidden ? logoutBtn : loginBtn).click();
       setTimeout(syncLogin, 50);
@@ -97,6 +123,11 @@
   });
   if (logoutBtn && window.MutationObserver) new MutationObserver(syncLogin).observe(logoutBtn, { attributes: true, attributeFilter: ['hidden'] });
   syncLogin();
+  /* cart badge mirrors the website's cart counter */
+  var cartCount = document.getElementById('cartCount'), badge = bar.querySelector('.tb-badge');
+  function syncCart() { if (badge && cartCount) { badge.hidden = cartCount.hidden || !+cartCount.textContent; badge.textContent = cartCount.textContent; } }
+  if (cartCount && window.MutationObserver) new MutationObserver(syncCart).observe(cartCount, { attributes: true, childList: true, characterData: true, subtree: true });
+  syncCart();
 
   function isHome() { var h = decodeURIComponent((location.hash || '').slice(1)); return !h || h === 'home' || h === 'top'; }
   function onRoute() {

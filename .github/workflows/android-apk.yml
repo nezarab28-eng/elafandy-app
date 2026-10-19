@@ -17,16 +17,12 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
       - run: npm ci
-      # Ship the website's current products and prices inside the APK (the app still refreshes them
-      # from the website on every launch). Keeps the built-in copy if the website can't be reached.
-      - name: Take the latest products and prices from the website
+      # Build the app on exactly what the website shows now: pages, scripts, prices, accounts, photos.
+      # (The app also refreshes products, prices, accounts and photos from the website while it runs.)
+      - name: Take the current website
         run: |
-          if curl -fsSL --retry 3 https://www.elafandy-tech.com/data/products.js -o /tmp/products.js && grep -q '^window.CATALOG=' /tmp/products.js; then
-            cp /tmp/products.js catalog/data/products.js
-            echo "::notice::Products from the website: $(grep -o '"priceDate":"[^"]*"' catalog/data/products.js | head -1)"
-          else
-            echo "::warning::Could not download the website's products; using the copy in the repository"
-          fi
+          out=$(bash scripts/pull-website.sh); echo "$out"
+          echo "::notice::$(echo "$out" | tail -1)"
       - run: npm run sync
       # Signed release APK when the KEYSTORE_BASE64 and KEYSTORE_PASSWORD secrets are set (same key every build,
       # so new versions install over old ones); otherwise a debug APK as before.

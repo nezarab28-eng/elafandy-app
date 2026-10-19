@@ -7,12 +7,12 @@
 (function () {
   var BASE = ((window.APP && window.APP.webUrl) || '').replace(/\/+$/, '');
   if (!BASE) return;
-  var K_CAT = 'live:catalog', K_SITE = 'live:site';
+  var K_CAT = 'live:catalog', K_SITE = 'live:site', K_USERS = 'live:users';
   function get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function valid(c) { return c && c.groups && c.groups.length && c.products && c.products.length; }
 
-  var savedCat = get(K_CAT), savedSite = get(K_SITE);
+  var savedCat = get(K_CAT), savedSite = get(K_SITE), savedUsers = get(K_USERS);
   if (valid(savedCat) && String(savedCat.generated || '') >= String((window.CATALOG || {}).generated || '')) window.CATALOG = savedCat;
   /* Customer logins: accept the accounts built into the app as well as the website's,
      so an account keeps working even if the published site has an older list. */
@@ -21,12 +21,19 @@
     window.SITE = JSON.parse(JSON.stringify(savedSite));
     window.SITE.users = builtInUsers.concat((savedSite.users || []).filter(function (u) { return builtInUsers.indexOf(u) < 0; }));
   }
-  var inUse = { cat: JSON.stringify(window.CATALOG), site: JSON.stringify(savedSite && savedSite.nameHe ? savedSite : null) };
+  /* customer accounts now live in data/users.js (window.CATALOG_USERS): keep the built-in ones too */
+  var builtInList = (window.CATALOG_USERS || []).slice();
+  if (savedUsers && savedUsers.length) window.CATALOG_USERS = builtInList.concat(savedUsers.filter(function (u) { return builtInList.indexOf(u) < 0; }));
+  var inUse = { cat: JSON.stringify(window.CATALOG), site: JSON.stringify(savedSite && savedSite.nameHe ? savedSite : null),
+                users: JSON.stringify(savedUsers && savedUsers.length ? savedUsers : null) };
 
   /* Product images: when online, take them from the website so a changed photo shows
      without a new app version. If the website copy fails, fall back to the built-in one
      (and the catalog itself falls back to the logo). */
   if (navigator.onLine !== false) window.IMG_BASE = BASE + '/';
+  /* a changing ?v= makes the phone fetch replaced photos instead of showing its cached copy:
+     new on every catalog update and at least once a day */
+  window.IMG_V = '?v=' + String((window.CATALOG || {}).generated || '').replace(/\D/g, '') + '-' + new Date().toISOString().slice(0, 10).replace(/\D/g, '');
   document.addEventListener('error', function (e) {
     var img = e.target;
     if (!img || img.tagName !== 'IMG' || img.dataset.local) return;
@@ -41,11 +48,11 @@
      Inside the Android/iPhone app, if the script tag can't load, read the file through the
      phone's own network layer instead (Capacitor's built-in HTTP plugin) and run it inline. */
   function run(path, inject, done) {
-    var keep = { c: window.CATALOG, s: window.SITE };
+    var keep = { c: window.CATALOG, s: window.SITE, u: window.CATALOG_USERS };
     var s = document.createElement('script');
     var finish = function (ok) {
-      var got = ok ? { c: window.CATALOG, s: window.SITE } : null;
-      window.CATALOG = keep.c; window.SITE = keep.s; s.remove();
+      var got = ok ? { c: window.CATALOG, s: window.SITE, u: window.CATALOG_USERS } : null;
+      window.CATALOG = keep.c; window.SITE = keep.s; window.CATALOG_USERS = keep.u; s.remove();
       done(got);
     };
     if (inject.text != null) { s.textContent = inject.text; document.head.appendChild(s); finish(true); return; }
@@ -86,10 +93,13 @@
     if (busy) return; busy = true; lastCheck = Date.now();
     grab('assets/config.js', function (cfg) {
       grab('data/products.js', function (data) {
+       grab('data/users.js', function (us) {
         busy = false;
+        if (us && us.u && us.u !== builtInList && us.u.length && JSON.stringify(us.u) !== inUse.users && put(K_USERS, us.u)) pending = true;
         if (cfg && cfg.s && cfg.s.nameHe && JSON.stringify(cfg.s) !== inUse.site && put(K_SITE, cfg.s)) pending = true;
         if (data && valid(data.c) && JSON.stringify(data.c) !== inUse.cat && put(K_CAT, data.c)) pending = true;
         apply();
+       });
       });
     });
   }
