@@ -1,27 +1,33 @@
 # Manual check of what the website serves to the app (run from the Actions tab).
+# Saves a copy of the website's code and data files (no images) to the "site-snapshot" branch.
 name: Website check
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check website files as the app requests them
+      - name: Copy the website's files and check its images
         run: |
-          for host in elafandy-tech.com www.elafandy-tech.com; do
-            echo "::notice::$host resolves to $(getent hosts $host | awk '{print $1}' | sort -u | tr '\n' ' ')"
-            for path in data/products.js assets/config.js assets/app.js index.html; do
-              r=$(curl -s -o /tmp/f -w '%{http_code} %{content_type} %{size_download} %{url_effective}' -L "https://$host/$path")
-              echo "::notice::$host/$path -> $r gen=$(grep -o '"priceDate":"[^"]*"' /tmp/f | head -1)"
-            done
+          mkdir snap && cd snap
+          B=https://www.elafandy-tech.com
+          for path in index.html assets/app.js assets/style.css assets/config.js data/products.js sw.js manifest.webmanifest; do
+            mkdir -p "$(dirname "$path")"; curl -sf "$B/$path" -o "$path" || echo "missing $path" >> report.txt
           done
-          curl -s https://www.elafandy-tech.com/data/products.js -o /tmp/p.js
-          ids=$(grep -o '"id":"[^"]*"' /tmp/p.js | cut -d'"' -f4 | head -400 | awk 'NR%40==1')
+          grep -oE '(src|href)="[^"]+"' index.html | sort -u >> report.txt
+          ids=$(grep -o '"id":"[^"]*"' data/products.js | cut -d'"' -f4)
+          echo "products: $(echo "$ids" | wc -l)" >> report.txt
           for id in $ids; do
-            for host in elafandy-tech.com www.elafandy-tech.com; do
-              a=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' "https://$host/images/$id.webp")
-              b=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' -H 'Referer: https://localhost/' -H 'Origin: https://localhost' "https://$host/images/$id.webp")
-              echo "::notice::$host images/$id.webp plain=[$a] from-app=[$b] cache=[$(curl -sI "https://$host/images/$id.webp" | grep -i '^cache-control\|^last-modified' | tr -d '\r' | tr '\n' ' ')]"
+            for ext in webp jpg png; do
+              r=$(curl -s -o /dev/null -w '%{http_code} %{size_download}' "$B/images/$id.$ext")
+              [ "${r%% *}" = 200 ] && { echo "$id.$ext $r $(curl -sI "$B/images/$id.$ext" | grep -i '^last-modified' | tr -d '\r')" >> images.txt; break; }
             done
           done
-          echo "::notice::products in live file: $(grep -o '"id":"[^"]*"' /tmp/p.js | wc -l)"
-          grep -o 'IMG_BUNDLES\|bundles/[^"]*' <(curl -s https://www.elafandy-tech.com/index.html) | sort -u | sed 's/^/::notice::index mentions /'
+          echo "images found: $(wc -l < images.txt)" >> report.txt
+          id1=$(echo "$ids" | head -1)
+          echo "image with app referer: $(curl -s -o /dev/null -w '%{http_code}' -H 'Referer: https://localhost/' "$B/images/$id1.webp")" >> report.txt
+          echo "image headers:" >> report.txt; curl -sI "$B/images/$id1.webp" >> report.txt
+          git init -q -b site-snapshot && git add -A
+          git -c user.name=bot -c user.email=bot@users.noreply.github.com commit -qm "Website snapshot"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" site-snapshot
