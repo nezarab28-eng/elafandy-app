@@ -33,7 +33,13 @@ jobs:
             export KEYSTORE_PASSWORD
             printf %s "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -di > "$RUNNER_TEMP/release.p12" \
               || { echo "::error::KEYSTORE_BASE64 is not valid - paste the whole KEYSTORE_BASE64.txt again"; exit 1; }
-            keytool -list -keystore "$RUNNER_TEMP/release.p12" -storetype pkcs12 -storepass "$KEYSTORE_PASSWORD" >/dev/null 2>&1 \
+            ks_ok() { keytool -list -keystore "$RUNNER_TEMP/release.p12" -storetype pkcs12 -storepass "$1" >/dev/null 2>&1; }
+            # phone keyboards capitalise the first letter when pasting into an empty box
+            if ! ks_ok "$KEYSTORE_PASSWORD"; then
+              alt="$(printf %s "${KEYSTORE_PASSWORD:0:1}" | tr '[:upper:]' '[:lower:]')${KEYSTORE_PASSWORD:1}"
+              ks_ok "$alt" && export KEYSTORE_PASSWORD="$alt"
+            fi
+            ks_ok "$KEYSTORE_PASSWORD" \
               || { echo "::error::Keystore and KEYSTORE_PASSWORD do not match ($(stat -c%s "$RUNNER_TEMP/release.p12") bytes decoded)"; exit 1; }
             export KEYSTORE_FILE="$RUNNER_TEMP/release.p12"
             ./gradlew assembleRelease -PversionCode=${{ github.run_number }} > build.log 2>&1 \
