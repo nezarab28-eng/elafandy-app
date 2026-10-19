@@ -1,0 +1,38 @@
+missing sw.js
+missing manifest.webmanifest
+href="#"
+href="#home"
+href="#i-cart"
+href="#i-dl"
+href="#i-globe"
+href="#i-lock"
+href="#i-logout"
+href="#i-phone"
+href="#i-search"
+href="#i-share"
+href="#i-wa"
+href="#i-x"
+href="#main"
+href="assets/favicon.png"
+href="assets/skins.css"
+href="assets/style.css"
+href="https://elafandy-tech.com/"
+href="https://fonts.googleapis.com"
+href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&family=Rubik:wght@400;500;600;700;800&family=Assistant:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;700;800&display=swap"
+href="https://fonts.gstatic.com"
+src="assets/app.js"
+src="assets/cart.js"
+src="assets/config.js"
+src="assets/i18n.js"
+src="assets/logo.webp"
+src="data/products.js"
+src="data/users.js"
+products: 1083
+images found: 1074
+image with app referer: 404
+image headers:
+HTTP/2 404 
+date: Mon, 19 Oct 2026 19:57:29 GMT
+server: LiteSpeed
+x-turbo-charged-by: LiteSpeed
+
