@@ -37,36 +37,66 @@
     img.src = src.slice(BASE.length + 1).replace(/\?.*$/, '');
   }, true);
 
-  /* Run a website script without disturbing the running catalog, and hand back what it set. */
-  function grab(path, done) {
+  /* Run a website script without disturbing the running catalog, and hand back what it set.
+     Inside the Android/iPhone app, if the script tag can't load, read the file through the
+     phone's own network layer instead (Capacitor's built-in HTTP plugin) and run it inline. */
+  function run(path, inject, done) {
     var keep = { c: window.CATALOG, s: window.SITE };
     var s = document.createElement('script');
-    s.src = BASE + '/' + path + '?t=' + Date.now();
-    s.onload = s.onerror = function (ev) {
-      var got = ev.type === 'load' ? { c: window.CATALOG, s: window.SITE } : null;
+    var finish = function (ok) {
+      var got = ok ? { c: window.CATALOG, s: window.SITE } : null;
       window.CATALOG = keep.c; window.SITE = keep.s; s.remove();
       done(got);
     };
+    if (inject.text != null) { s.textContent = inject.text; document.head.appendChild(s); finish(true); return; }
+    s.src = BASE + '/' + path + '?t=' + Date.now();
+    s.onload = function () { finish(true); };
+    s.onerror = function () { finish(false); };
     document.head.appendChild(s);
   }
+  function nativeGet(path, cb) {
+    var H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp;
+    if (!H || !H.request) return cb(null);
+    H.request({ url: BASE + '/' + path + '?t=' + Date.now(), method: 'GET', responseType: 'text' })
+      .then(function (r) { cb(r && r.status === 200 && typeof r.data === 'string' ? r.data : null); }, function () { cb(null); });
+  }
+  function grab(path, done) {
+    run(path, {}, function (got) {
+      if (got) return done(got);
+      nativeGet(path, function (text) { text ? run(path, { text: text }, done) : done(null); });
+    });
+  }
 
+  /* Apply new data: reload while the customer is on the home screen (at most once a minute),
+     otherwise as soon as they next go back to the home screen. */
+  var pending = false;
+  function atHome() { var h = (location.hash || '').slice(1); return !h || h === 'home' || h === 'top'; }
+  function apply() {
+    var modal = document.getElementById('loginModal');
+    if (!pending || !atHome() || (modal && !modal.hidden)) return;
+    var last = 0; try { last = +sessionStorage.getItem('live:reloadedAt') || 0; } catch (e) {}
+    if (Date.now() - last < 60000) return;
+    try { sessionStorage.setItem('live:reloadedAt', String(Date.now())); } catch (e) {}
+    location.reload();
+  }
+  window.addEventListener('hashchange', function () { setTimeout(apply, 50); });
+
+  var busy = false, lastCheck = 0;
   function refresh() {
+    if (busy) return; busy = true; lastCheck = Date.now();
     grab('assets/config.js', function (cfg) {
       grab('data/products.js', function (data) {
-        var changed = false;
-        if (cfg && cfg.s && cfg.s.nameHe && JSON.stringify(cfg.s) !== inUse.site) { changed = put(K_SITE, cfg.s) || changed; }
-        if (data && valid(data.c) && JSON.stringify(data.c) !== inUse.cat) { changed = put(K_CAT, data.c) || changed; }
-        if (!changed) return;
-        var h = (location.hash || '').slice(1), modal = document.getElementById('loginModal');
-        var atHome = !h || h === 'home' || h === 'top';
-        var done = true; try { done = !!sessionStorage.getItem('live:reloaded'); } catch (e) {}
-        if (atHome && !(modal && !modal.hidden) && !done) {
-          try { sessionStorage.setItem('live:reloaded', '1'); } catch (e) {}
-          location.reload();
-        }
+        busy = false;
+        if (cfg && cfg.s && cfg.s.nameHe && JSON.stringify(cfg.s) !== inUse.site && put(K_SITE, cfg.s)) pending = true;
+        if (data && valid(data.c) && JSON.stringify(data.c) !== inUse.cat && put(K_CAT, data.c)) pending = true;
+        apply();
       });
     });
   }
   if (document.readyState === 'complete') setTimeout(refresh, 300);
   else window.addEventListener('load', function () { setTimeout(refresh, 300); });
+  /* phones keep the app running in the background for days: check again when it comes back */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && Date.now() - lastCheck > 5 * 60000) refresh();
+  });
 })();
